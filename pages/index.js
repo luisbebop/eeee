@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import Web3Modal from "web3modal"
 import { ethers } from "ethers"
 import WalletConnectProvider from "@walletconnect/web3-provider"
+import { abi } from "../constants/ERC721"
 
 let web3Modal;
 
@@ -32,6 +33,12 @@ export default function Home() {
     signer: null,
   })
 
+  const [crystals, setCrystals] = useState({
+    name: "",
+    balance: 0,
+    ids: [],
+    urls: []
+  })
 
   async function showWeb3Modal() {
     try {
@@ -44,11 +51,115 @@ export default function Home() {
         provider: _provider, 
         signer: _signer, 
         walletAddress: _walletAddress, 
-        isWalletConnected: true})
-
+        isWalletConnected: true
+      })
     } catch (e) {
       console.log(e)
     }
+  }
+
+  async function loadCrystals() {
+    const contractAddress = "0x7AfEdA4c714e1C0A2a1248332c100924506aC8e6"
+    
+    const crystals = {
+      name: "",
+      balance: 0,
+      ids: [],
+      urls: []
+    }
+
+    console.log("fetch ...")
+
+    crystals.name = await getTokenName(contractAddress)
+    crystals.balance = await getTokenBalanceOf(contractAddress)
+
+    const tokens = await listTokensOfOwner(contractAddress, state.walletAddress)
+
+    // check 
+    // https://javascript.info 
+    // https://dmitripavlutin.com/javascript-fetch-async-await
+    // https://fireship.io/lessons/web3-solidity-hardhat-react-tutorial
+
+    for (let token of tokens) {
+      const uri = await getTokenURI(contractAddress, token)
+      const response = await fetch(uri)
+      const nftMetadata = await response.json()
+
+      crystals.ids.push(token)
+      crystals.urls.push(nftMetadata.image_url)
+    }
+
+    console.log(crystals)
+    setCrystals(crystals)
+  }
+
+  async function listTokensOfOwner(tokenAddress, account) {
+    const token = new ethers.Contract(
+      tokenAddress, 
+      abi, 
+      state.signer
+    );
+  
+    const sentLogs = await token.queryFilter(
+      token.filters.Transfer(account, null),
+    );
+    const receivedLogs = await token.queryFilter(
+      token.filters.Transfer(null, account),
+    );
+  
+    const logs = sentLogs.concat(receivedLogs)
+      .sort(
+        (a, b) =>
+          a.blockNumber - b.blockNumber ||
+          a.transactionIndex - b.transactionIndex,
+      );
+  
+    const owned = new Set();
+  
+    for (const { args: { from, to, tokenId } } of logs) {
+      if (addressEqual(to, account)) {
+        owned.add(parseInt(tokenId.toString()));
+      } else if (addressEqual(from, account)) {
+        owned.delete(parseInt(tokenId.toString()));
+      }
+    }
+  
+    return owned;
+  }
+  
+  function addressEqual(a, b) {
+    return a.toLowerCase() === b.toLowerCase();
+  }
+  
+  async function getTokenName(tokenAddress) {
+    const token = new ethers.Contract(
+      tokenAddress, 
+      abi, 
+      state.signer
+    )
+
+    return token.name();
+  }
+
+  async function getTokenBalanceOf(tokenAddress) {
+    const token = new ethers.Contract(
+      tokenAddress, 
+      abi, 
+      state.signer
+    )
+
+    let balance = await token.balanceOf(state.walletAddress)
+    return parseInt(balance.toString());
+  }
+
+  async function getTokenURI(tokenAddress, _tokenId) {
+    const token = new ethers.Contract(
+      tokenAddress, 
+      abi, 
+      state.signer
+    )
+
+    return token.tokenURI(_tokenId);
   }
 
   return (
@@ -65,9 +176,34 @@ export default function Home() {
         </h1>
 
         { state.isWalletConnected ? (
+          <>
+            <p className={styles.code}>{state.walletAddress}</p>
+            
+            { crystals.balance > 0 ? (
+            <>
+              <p>{crystals.balance} {crystals.name}</p>
+              <p>
+                <Image
+                  src={crystals.urls[0]}
+                  alt="image-alt-text"
+                  width={400}
+                  height={400} />
+              </p>
+              <p>
+                <Image
+                  src={crystals.urls[1]}
+                  alt="image-alt-text"
+                  width={400}
+                  height={400} />
+              </p>
+            </>
+            ):(
+              <p>no crystals</p>
+            )}
 
-          <p className={styles.code}>{state.walletAddress}</p>
-
+            <button onClick={() => loadCrystals()}>load crystals</button>
+          </>
+          
         ) : (
 
           <p className={styles.description}>
