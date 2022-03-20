@@ -6,49 +6,76 @@ import Web3Modal from "web3modal"
 import { ethers } from "ethers"
 import WalletConnectProvider from "@walletconnect/web3-provider"
 
-export default function Home() {
-  const providerOptions = {
-    walletconnect: {
-      package: WalletConnectProvider,
-      options: {
-        infuraId: process.NEXT_PUBLIC_INFURA_KEY,
-      }
+let web3Modal;
+
+const providerOptions = {
+  walletconnect: {
+    package: WalletConnectProvider,
+    options: {
+      infuraId: process.NEXT_PUBLIC_INFURA_KEY,
     }
   }
+}
 
+if (typeof window !== "undefined") {
+  web3Modal = new Web3Modal({
+    cacheProvider: false,
+    providerOptions, // required
+  });
+}
+
+export default function Home() {
   const [state, setState] = useState({
     isWalletConnected: false,
     walletAddress: null,
-    instance: null,
     provider: null,
     signer: null,
   })
 
+
   async function showWeb3Modal() {
-    if (!state.instance) {
-      const web3Modal = new Web3Modal({
-        cacheProvider: true, // optional
-        providerOptions // required
-      })
+    try {
+      const web3ModalProvider = await web3Modal.connect()
+      const _provider = new ethers.providers.Web3Provider(web3ModalProvider)
+      const _signer = _provider.getSigner()
+      const _walletAddress = await _signer.getAddress()
 
-      try {
-        const _instance = await web3Modal.connect()
-        const _provider = new ethers.providers.Web3Provider(_instance)
-        const _signer = _provider.getSigner()
-        const _walletAddress = await _signer.getAddress()
+      setState({
+        provider: _provider, 
+        signer: _signer, 
+        walletAddress: _walletAddress, 
+        isWalletConnected: true})
 
-        setState({
-          instance: _instance, 
-          provider: _provider, 
-          signer: _signer, 
-          walletAddress: _walletAddress, 
-          isWalletConnected: true})
-
-      } catch (error) {
-        console.log(error)
-      }
+    } catch (e) {
+      console.log(e)
     }
   }
+
+  // async function showWeb3Modal() {
+  //   if (!state.instance) {
+  //     const web3Modal = new Web3Modal({
+  //       cacheProvider: true, // optional
+  //       providerOptions // required
+  //     })
+
+  //     try {
+  //       const _instance = await web3Modal.connect()
+  //       const _provider = new ethers.providers.Web3Provider(_instance)
+  //       const _signer = _provider.getSigner()
+  //       const _walletAddress = await _signer.getAddress()
+
+  //       setState({
+  //         instance: _instance, 
+  //         provider: _provider, 
+  //         signer: _signer, 
+  //         walletAddress: _walletAddress, 
+  //         isWalletConnected: true})
+
+  //     } catch (error) {
+  //       console.log(error)
+  //     }
+  //   }
+  // }
 
   return (
     <div className={styles.container}>
@@ -76,11 +103,6 @@ export default function Home() {
           </p>
 
         )}
-
-        <button className="button" type="button" onClick={() => showWeb3Modal()}>
-            Connect
-        </button>
-
       </main>
 
       <footer className={styles.footer}>
