@@ -60,7 +60,7 @@
   background: #fafafa;
   border-radius: 5px;
   padding: 0.75rem;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono,
     Bitstream Vera Sans Mono, Courier New, monospace;
 }
@@ -121,9 +121,6 @@
   font-weight: normal;
   border-radius: 6px;
   overflow: hidden;
-}
-
-.button_anon_pen:hover {
   -webkit-animation: play 1.6s ease-in infinite;
 }
 

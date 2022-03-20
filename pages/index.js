@@ -12,7 +12,7 @@ const providerOptions = {
   walletconnect: {
     package: WalletConnectProvider,
     options: {
-      infuraId: process.NEXT_PUBLIC_INFURA_KEY,
+      infuraId: "fe84b59e01544532bd801eb259e39c3c",
     }
   }
 }
@@ -51,32 +51,6 @@ export default function Home() {
     }
   }
 
-  // async function showWeb3Modal() {
-  //   if (!state.instance) {
-  //     const web3Modal = new Web3Modal({
-  //       cacheProvider: true, // optional
-  //       providerOptions // required
-  //     })
-
-  //     try {
-  //       const _instance = await web3Modal.connect()
-  //       const _provider = new ethers.providers.Web3Provider(_instance)
-  //       const _signer = _provider.getSigner()
-  //       const _walletAddress = await _signer.getAddress()
-
-  //       setState({
-  //         instance: _instance, 
-  //         provider: _provider, 
-  //         signer: _signer, 
-  //         walletAddress: _walletAddress, 
-  //         isWalletConnected: true})
-
-  //     } catch (error) {
-  //       console.log(error)
-  //     }
-  //   }
-  // }
-
   return (
     <div className={styles.container}>
       <Head>
@@ -92,7 +66,7 @@ export default function Home() {
 
         { state.isWalletConnected ? (
 
-          <a>{state.walletAddress}</a>
+          <p className={styles.code}>{state.walletAddress}</p>
 
         ) : (
 
