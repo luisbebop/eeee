@@ -76,6 +76,11 @@ export default function Home() {
           </p>
 
         )}
+
+        <button className="button" type="button" onClick={() => showWeb3Modal()}>
+            Connect
+        </button>
+
       </main>
 
       <footer className={styles.footer}>
